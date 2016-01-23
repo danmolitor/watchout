@@ -43,21 +43,14 @@ var enemy = svgBoard.selectAll("circle")
     .enter()
     .append('circle')
     .attr("r", 10)
-    .attr("cy", function(d){
+    .attr("cy", function(){
 
-      var y = Math.floor(Math.random() * gameBoard.height);
+      return Math.floor(Math.random() * 650);
       ////will need to change later and just use our axis
-      if(y < 10){
-        y = 10;
-      }
-      if(y > 790){
-        y = 790;
-      }
-      return y;
 
     })
-    .attr("cx", function(d){
-      return  20 + Math.floor(Math.random() * (gameBoard.width - 100));
+    .attr("cx", function(){
+      return  Math.floor(Math.random() * 600 )
     })
     .style("fill", "white")
     .classed("enemy", true);
@@ -95,3 +88,26 @@ var user = svgBoard.selectAll("circle")
 // function(d){
 //   return (Math.random() * d) * gameBoard.width
 // }
+
+setInterval(function() {
+  svgBoard.selectAll('circle')
+  .transition()
+  .attr("cx", function(d){
+      return  20 + Math.floor(Math.random() * (gameBoard.width - 100));
+    })
+  .attr("cy", function(d){
+
+      var y = Math.floor(Math.random() * gameBoard.height);
+      ////will need to change later and just use our axis
+      if(y < 10){
+        y = 10;
+      }
+      if(y > 790){
+        y = 790;
+      }
+      return y;
+
+    })
+  .duration(2000);
+
+}, 2000);
