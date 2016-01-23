@@ -13,3 +13,6 @@ var svg = d3.select("body")
             .attr("height", gameBoard.height)
             .classed("svg", true)
             .style("background-color", "black");
+
+
+//create variable for enemies
