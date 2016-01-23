@@ -14,8 +14,6 @@ var gameBoard = {
 //   y : d3.scale.linear().domain([0,100]).range([0,gameBoard.height])
 // };
 
-// var enemies = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
-
 var enemies = function(){
   var result = [];
 
@@ -50,47 +48,31 @@ var enemy = svgBoard.selectAll("circle")
 
     })
     .attr("cx", function(){
-      return  Math.floor(Math.random() * 600 )
+      return  Math.floor(Math.random() * 600 );
     })
     .style("fill", "white")
     .classed("enemy", true);
 
-    setTimeout(function(){
+var drag = d3.behavior.drag()
+            .on('dragstart', function(){user.style('fill', 'red');})
+            .on('drag', function(){ user.attr('cx', d3.event.x).attr('cy', d3.event.y);})
+            .on('dragend', function(){user.style('fill', 'orange');});
 
-    }, 2000);
 
-var user = svgBoard.selectAll("circle")
-    .data(enemies())
+var user = svgBoard.selectAll('.draggableCircle')
+    .data([{ x : (gameBoard.width / 2), y : (gameBoard.height / 2), r: 10}])
     .enter()
-    .append('circle')
-    .attr("r", 10)
-    .attr("cy", function(d){
+    .append('svg:circle')
+    .attr('class', 'draggableCircle')
+    .attr('cx', function(d) {return d.x; })
+    .attr('cy', function(d){ return d.y; })
+    .attr('r', function(d) { return d.r; })
+    .call(drag)
+    .style('fill', 'orange');
 
-      var y = Math.floor(Math.random() * gameBoard.height)
-      ////will need to change later and just use our axis
-      if(y < 10){
-        y = 10;
-      }
-      if(y > 790){
-        y = 790;
-      }
-      return y;
-
-    })
-    .attr("cx", function(d){
-      return  20 + Math.floor(Math.random() * (gameBoard.width - 100));
-    })
-    .style("fill", "white")
-    .classed("enemy", true);
-
-// svgBoard.selectAll('circle').data(dataset).enter().append(enemy)
-
-// function(d){
-//   return (Math.random() * d) * gameBoard.width
-// }
 
 setInterval(function() {
-  svgBoard.selectAll('circle')
+  svgBoard.selectAll('.enemy')
   .transition()
   .attr("cx", function(d){
       return  20 + Math.floor(Math.random() * (gameBoard.width - 100));
