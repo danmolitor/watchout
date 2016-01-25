@@ -2,11 +2,14 @@
 
 //create gameBoard object, with dimensions.
 
+var settings = {
+    w: window.innerWidth,
+    h: window.innerHeight,
+    r: 15,
+    duration: 1500
+}
 
-var gameBoard = {
-    height: 800,
-    width: 750,
-};
+
 
 
 // var axes = {
@@ -14,82 +17,158 @@ var gameBoard = {
 //   y : d3.scale.linear().domain([0,100]).range([0,gameBoard.height])
 // };
 
-var enemies = function(){
-  var result = [];
+var mouse = {
+    x: settings.w / 2,
+    y: settings.h / 2
+};
+var score = 0,
+    highScore = 0,
+    collisionCount = 0;
 
-  for(var i = 0; i < 30; i++){
-    result.push(i);
-  }
-
-  return result;
+var pixelize = function(number) {
+    return number + 'px';
+}
+var rand = function(n) {
+    return Math.floor(Math.random() * n);
+};
+var randX = function() {
+    return pixelize(rand(settings.w - settings.r * 2))
+};
+var randY = function() {
+    return pixelize(rand(settings.h - settings.r * 2))
 };
 
-console.log(enemies.length);
+
+var updateScore = function() {
+    d3.select('.scoreboard .current span').text(score);
+    d3.select('.scoreboard .high span').text(highScore);
+    d3.select('.scoreboard .collisions span').text(collisionCount);
+
+}
+
+
 //create svg variable as gameBoard
-var svgBoard = d3.select("body")
-    .append("svg")
-    .attr("width", gameBoard.width)
-    .attr("height", gameBoard.height)
-    .classed("svg", true)
-    .style("background-color", "black");
+var board = d3.select(".board").style({
+    width: pixelize(settings.w),
+    height: pixelize(settings.h)
+})
 
 
 //create variable for enemies
 
-var enemy = svgBoard.selectAll("circle")
-    .data(enemies())
+var asteroids = board.selectAll(".asteroids")
+    .data(d3.range(30))
     .enter()
-    .append('circle')
-    .attr("r", 10)
-    .attr("cy", function(){
-
-      return Math.floor(Math.random() * 650);
-      ////will need to change later and just use our axis
-
+    .append('div')
+    .attr('class', 'asteroid')
+    .style({
+        top: randY,
+        left: randX,
+        width: pixelize(settings.r * 2),
+        height: pixelize(settings.r * 2)
     })
-    .attr("cx", function(){
-      return  Math.floor(Math.random() * 600 );
+
+
+// var drag = d3.behavior.drag()
+//     .on('dragstart', function() {
+//         user.style('fill', 'red');
+//     })
+//     .on('drag', function() {
+//         user.attr('cx', d3.event.x).attr('cy', d3.event.y);
+//     })
+//     .on('dragend', function() {
+//         user.style('fill', 'orange');
+//     });
+
+
+d3.select('.mouse').style({
+    top: pixelize(mouse.y),
+    left: pixelize(mouse.x),
+    width: pixelize(settings.r * 2),
+    height: pixelize(settings.r * 2),
+    'border-radius': pixelize(settings.r * 2)
+})
+
+board.on('mousemove', function() {
+    var loc = d3.mouse(this);
+    mouse = {
+        x: loc[0],
+        y: loc[1]
+    };
+    d3.select('.mouse').style({
+        top: pixelize(mouse.y - settings.r),
+        left: pixelize(mouse.x - settings.r)
     })
-    .style("fill", "white")
-    .classed("enemy", true);
-
-var drag = d3.behavior.drag()
-            .on('dragstart', function(){user.style('fill', 'red');})
-            .on('drag', function(){ user.attr('cx', d3.event.x).attr('cy', d3.event.y);})
-            .on('dragend', function(){user.style('fill', 'orange');});
+});
 
 
-var user = svgBoard.selectAll('.draggableCircle')
-    .data([{ x : (gameBoard.width / 2), y : (gameBoard.height / 2), r: 10}])
-    .enter()
-    .append('svg:circle')
-    .attr('class', 'draggableCircle')
-    .attr('cx', function(d) {return d.x; })
-    .attr('cy', function(d){ return d.y; })
-    .attr('r', function(d) { return d.r; })
-    .call(drag)
-    .style('fill', 'orange');
+var move = function(element) {
+    element.transition().duration(settings.duration).ease('bounce-in-out').style({
+        top: randY,
+        left: randX
+    }).each('end', function() {
+        move(d3.select(this));
 
+    });
+}
 
-setInterval(function() {
-  svgBoard.selectAll('.enemy')
-  .transition()
-  .attr("cx", function(d){
-      return  20 + Math.floor(Math.random() * (gameBoard.width - 100));
+move(asteroids);
+
+// setInterval(function() {
+//     board.selectAll('.asteroids')
+//         .transition()
+//         .attr("cx", function(d) {
+//             return 20 + Math.floor(Math.random() * (board.width - 100));
+//         })
+//         .attr("cy", function(d) {
+
+//             var y = Math.floor(Math.random() * board.height);
+//             ////will need to change later and just use our axis
+//             if (y < 10) {
+//                 y = 10;
+//             }
+//             if (y > 790) {
+//                 y = 790;
+//             }
+//             return y;
+
+//         })
+//         .duration(2000);
+
+// }, 2000);
+
+var scoreTicket = function() {
+    score = score + 1;
+    highScore = Math.max(score, highScore);
+    updateScore();
+}
+
+setInterval(scoreTicket, 100);
+
+var prevCollision = false;
+var detectCollisions = function() {
+    var collision = false;
+
+    asteroids.each(function() {
+        var cx = this.offsetLeft + settings.r;
+        var cy = this.offsetTop + settings.r;
+        //the magic of collision detection
+        var x = cx - mouse.x;
+        var y = cy - mouse.y;
+        if (Math.sqrt(x * x + y * y) < settings.r * 2) {
+            collision = true;
+        }
     })
-  .attr("cy", function(d){
+    if (collision) {
+        score = 0;
+        board.style('background-color', 'red')
+        if (prevCollision !== collision) {
+            collisionCount = collisionCount + 1;
+        }
+    } else {
+      board.style('background-color', 'white')
+    }
+    prevCollision = collision;
+};
 
-      var y = Math.floor(Math.random() * gameBoard.height);
-      ////will need to change later and just use our axis
-      if(y < 10){
-        y = 10;
-      }
-      if(y > 790){
-        y = 790;
-      }
-      return y;
-
-    })
-  .duration(2000);
-
-}, 2000);
+d3.timer(detectCollisions);
